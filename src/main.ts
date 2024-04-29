@@ -5,6 +5,7 @@ import SolanaConnector from './connectors/solanaConnector';
 import JupiterConnector from './connectors/jupiterConnector';
 import sleep from './utils/sleepTimout';
 import DatabaseConnector from './connectors/sqlite3Connector';
+import calculateProfit from './utils/calculateProfit';
 
 const AMOUNT_OF_TOKENS_TO_SWAP = (Number(process.env.AMOUNT_OF_TOKENS_TO_SWAP) / 100) || 1;
 const EXPECTED_PERCENTAGE_PROFIT = (Number(process.env.EXPECTED_PERCENTAGE_PROFIT) / 100) || 0.5;
@@ -53,14 +54,17 @@ const main = async () => {
                     response.tokensAddresses.map(async token => {
                         if (symbol === token.tokenSymbol) {
                             if (openOrderTokenAddresses !== undefined && openOrderTokenAddresses.length < 1 || openOrderTokenAddresses !== undefined && !openOrderTokenAddresses.includes(sellingPrice!.data[symbol].id)) {
-                                db.storeNewData(
+                                await db.storeNewData(
                                     "tradedTokens",
                                     sellingPrice!.data[symbol].mintSymbol,
                                     token.tokenBalance,
                                     sellingPrice!.data[symbol].price,
                                     sellingPrice!.data[symbol].price + (sellingPrice!.data[symbol].price * EXPECTED_PERCENTAGE_PROFIT)
-                                )
-                                await jupiter.createOrderLimit(sellingPrice!.data[symbol].price, sellingPrice!.data[symbol].price + (sellingPrice!.data[symbol].price * EXPECTED_PERCENTAGE_PROFIT), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                ).then(() => {
+                                    coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.")
+                                })
+                                const amountToExpect = calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance);
+                                await jupiter.createOrderLimit(token.tokenBalance, amountToExpect, wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
                             }
                         }
                     })
