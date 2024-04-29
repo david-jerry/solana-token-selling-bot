@@ -47,7 +47,9 @@ Create a .env file in the project root and add the required environment variable
 Run the bot:
 
 ```bash
-npm start
+npm run dev
+# or
+yarn dev
 ```
 
 ## Configuration
@@ -79,4 +81,4 @@ The bot can be configured using environment variables in the .env file. Make sur
 Once the bot is running, it will automatically monitor the specified tokens' prices and initiate a sell order when the selling price meets the configured threshold.
 Support
 
-For any questions, issues, or feature requests, please open an issue on GitHub.
+For any questions, issues, or feature requests, please open an [issue](https://github.com/david-jerry/solana-token-selling-bot/issues) on GitHub.

@@ -5,7 +5,8 @@ const EXPECTED_PERCENTAGE_PROFIT = (Number(process.env.EXPECTED_PERCENTAGE_PROFI
 const calculateProfit = async (currentMarketPrice: number, numberOfTokensToSell: number): Promise<number> => {
     const expectedTradingMarketPrice = currentMarketPrice + (EXPECTED_PERCENTAGE_PROFIT * currentMarketPrice);
     const finalValue = numberOfTokensToSell / expectedTradingMarketPrice
-    return finalValue 
+    return finalValue
 }
 
 export default calculateProfit
+
