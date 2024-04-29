@@ -63,7 +63,7 @@ const main = async () => {
                                 ).then(() => {
                                     coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.")
                                 })
-                                const amountToExpect = calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance);
+                                const amountToExpect = await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance);
                                 await jupiter.createOrderLimit(token.tokenBalance, amountToExpect, wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
                             }
                         }
