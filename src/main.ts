@@ -54,6 +54,7 @@ const main = async () => {
                     response.tokensAddresses.map(async token => {
                         if (symbol === token.tokenSymbol) {
                             if (openOrderTokenAddresses !== undefined && openOrderTokenAddresses.length < 1 || openOrderTokenAddresses !== undefined && !openOrderTokenAddresses.includes(sellingPrice!.data[symbol].id)) {
+                                const outputToken = await solana.getTokenMetaData(sellingPrice!.data[symbol].id);
                                 await db.storeNewData(
                                     "tradedTokens",
                                     sellingPrice!.data[symbol].mintSymbol,
@@ -64,7 +65,7 @@ const main = async () => {
                                     coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.")
                                 })
                                 const amountToExpect = await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance);
-                                await jupiter.createOrderLimit(token.tokenBalance, amountToExpect, wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                await jupiter.createOrderLimit(token.tokenBalance * 10**token.decimals!, amountToExpect * 10**outputToken.decimals!, wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
                             }
                         }
                     })
