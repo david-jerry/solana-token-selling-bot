@@ -47,7 +47,9 @@ Create a .env file in the project root and add the required environment variable
 Run the bot:
 
 ```bash
-npm start
+npm run dev
+# or
+yarn dev
 ```
 
 ## Configuration
