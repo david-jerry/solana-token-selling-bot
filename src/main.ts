@@ -51,7 +51,7 @@ const main = async () => {
 
                     console.log("Order Limits", openOrderTokenAddresses)
 
-                    response.tokensAddresses.map(async token => {
+                    response.tokensAddresses.map(async (token) => {
                         if (symbol === token.tokenSymbol) {
                             if (openOrderTokenAddresses !== undefined && openOrderTokenAddresses.length < 1 || openOrderTokenAddresses !== undefined && !openOrderTokenAddresses.includes(sellingPrice!.data[symbol].id)) {
                                 const outputToken = await solana.getTokenMetaData(sellingPrice!.data[symbol].id);
