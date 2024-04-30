@@ -36,26 +36,24 @@ class DatabaseConnector {
      * storeNewData("tableName", "TokenName", 100, 10, 20);
      */
     storeNewData = async (dbTable: string, tokenName: string, tokenBalance: number, purchasePrice: number, sellingPrice: number): Promise<void> => {
-        try {
-            this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], (err: { message: any; }) => {
-                if (err) {
-                    coloredError(err.message, "DB");
-                } else {
-                    coloredInfo(`Inserted data with id`, "DB");
+        this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], async (err: { message: any; }) => {
+            if (err) {
+                coloredError(err.message, "DB");
+                if (err.message.includes('no such table')) {
+                    await this.createDb(dbTable).then(() => {
+                        this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], (err: { message: any; }) => {
+                            if (err) {
+                                coloredError(err.message, "DB");
+                            } else {
+                                coloredInfo(`Inserted data with id`, "DB");
+                            }
+                        });
+                    })
                 }
-            });
-        } catch (error) {
-            coloredDebug(`Creating database table ${dbTable}`)
-            await this.createDb(dbTable).then(() => {
-                this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], (err: { message: any; }) => {
-                    if (err) {
-                        coloredError(err.message, "DB");
-                    } else {
-                        coloredInfo(`Inserted data with id`, "DB");
-                    }
-                });
-            })
-        }
+            } else {
+                coloredInfo(`Inserted data with id`, "DB");
+            }
+        });
     };
 
     /**
