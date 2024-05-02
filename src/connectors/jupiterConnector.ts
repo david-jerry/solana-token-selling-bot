@@ -4,7 +4,7 @@ import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, VersionedTransaction,
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { LimitOrderProvider, ownerFilter } from "@jup-ag/limit-order-sdk";
 import { BN, Wallet } from '@project-serum/anchor';
-import { coloredDebug, coloredError, coloredInfo } from '../utils/logger';
+import { coloredDebug, coloredError, coloredInfo, coloredWarn } from '../utils/logger';
 import axios from 'axios';
 
 interface TokenData {
@@ -56,9 +56,9 @@ class JupiterConnector {
         this.wallet = wallet;
         this.limitOrder = new LimitOrderProvider(
             solanaConnection,
-            undefined,
-            undefined,
-            undefined
+            // undefined,
+            // undefined,
+            // undefined
         )
     }
 
@@ -124,23 +124,35 @@ class JupiterConnector {
      * const orderPubKey = await connector.createOrderLimit(100, 200, wallet, 'sellTokenAddress', 'buyTokenAddress');
      * console.log(orderPubKey); // Output: <orderPubKey>
     */
-    createOrderLimit = async (amountToSell: number, amountToExpect: number, wallet: Wallet, sellTokenAddress: string, buyTokenAddress: string): Promise<PublicKey> => {
+    createOrderLimit = async (amountToSell: number, amountToExpect: number, wallet: Wallet, sellTokenAddress: string, buyTokenAddress: string): Promise<void> => {
         coloredInfo("Creating a new Limit Order");
+        coloredInfo(`Amount to sell: ${new BN(amountToSell)}`)
+        coloredInfo(`Amount to buy: ${new BN(amountToExpect)}`)
 
         const base = Keypair.generate();
-        const { tx, orderPubKey } = await this.limitOrder.createOrder({
-            owner: wallet.publicKey,
-            inAmount: new BN(amountToSell),
-            outAmount: new BN(amountToExpect),
-            inputMint: new PublicKey(sellTokenAddress),
-            outputMint: new PublicKey(buyTokenAddress),
-            expiredAt: null,
-            base: base.publicKey,
-        });
+        try {
+            await this.limitOrder.createOrder({
+                owner: wallet.payer.publicKey,
+                inAmount: new BN(amountToSell),
+                outAmount: new BN(amountToExpect),
+                inputMint: new PublicKey(sellTokenAddress),
+                outputMint: new PublicKey(buyTokenAddress),
+                expiredAt: null,
+                base: base.publicKey,
+            }).then(async ({ tx, orderPubKey }) => {
+                console.error(wallet.payer.publicKey.toJSON())
+                console.log(tx.feePayer)
+                console.log(base.publicKey.toJSON())
+    
+                await sendAndConfirmTransaction(this.connection, tx, [wallet.payer, base]);
+                coloredDebug("Limit Order has been submitted successfully", "jupiter");
+                return orderPubKey
+            });
+        } catch (err: any) {
+            coloredError(err.message)
+            coloredWarn("-----------------------------------------------------------\n\n\n")
+        }
 
-        await sendAndConfirmTransaction(this.connection, tx, [wallet.payer, base]);
-        coloredDebug("Limit Order has been submitted successfully", "jupiter");
-        return orderPubKey
     }
 
     /**
@@ -169,7 +181,7 @@ class JupiterConnector {
      * const openOrders = await connector.getOpenOrder(wallet);
      * console.log(openOrders); // Output: <openOrders>
      */
-    getOpenOrder = async (owner: Wallet): Promise<string[]|undefined> => {
+    getOpenOrder = async (owner: Wallet): Promise<string[] | undefined> => {
         try {
             const res = await this.limitOrder.getOrders([ownerFilter(owner.publicKey)]);
             const openOrderTokenAddresses: string[] = res.map(order => order.account.inputMint.toString())

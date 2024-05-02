@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import sqlite3 from "sqlite3";
 import { coloredInfo, coloredError, coloredWarn, coloredDebug } from "../../src/utils/logger";
+import sleep from '../utils/sleepTimout';
 
 class DatabaseConnector {
     db: sqlite3.Database;
@@ -41,19 +42,23 @@ class DatabaseConnector {
                 coloredError(err.message, "DB");
                 if (err.message.includes('no such table')) {
                     await this.createDb(dbTable).then(() => {
-                        this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], (err: { message: any; }) => {
+                        this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], async (err: { message: any; }) => {
                             if (err) {
                                 coloredError(err.message, "DB");
+                                await sleep(3000);
                             } else {
                                 coloredInfo(`Inserted data with id`, "DB");
+                                await sleep(3000);
                             }
                         });
                     })
                 }
             } else {
                 coloredInfo(`Inserted data with id`, "DB");
+                await sleep(3000);
             }
         });
+
     };
 
     /**

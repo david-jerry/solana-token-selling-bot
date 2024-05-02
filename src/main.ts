@@ -49,9 +49,9 @@ const main = async () => {
                     coloredDebug("Fetching Pending Order Limits");
                     const openOrderTokenAddresses = await jupiter.getOpenOrder(wallet!);
 
-                    console.log("Order Limits", openOrderTokenAddresses)
+                    // console.log("Order Limits", openOrderTokenAddresses)
 
-                    response.tokensAddresses.map(async (token) => {
+                    const subPromise = response.tokensAddresses.map(async (token) => {
                         if (symbol === token.tokenSymbol) {
                             if (openOrderTokenAddresses !== undefined && openOrderTokenAddresses.length < 1 || openOrderTokenAddresses !== undefined && !openOrderTokenAddresses.includes(sellingPrice!.data[symbol].id)) {
                                 const outputToken = await solana.getTokenMetaData(sellingPrice!.data[symbol].id);
@@ -63,19 +63,22 @@ const main = async () => {
                                     sellingPrice!.data[symbol].price + (sellingPrice!.data[symbol].price * EXPECTED_PERCENTAGE_PROFIT)
                                 ).then(async () => {
                                     coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.")
-                                    const amountToExpect = await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance);
-                                    await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), amountToExpect * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                    await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance).then(async (amountToExpect) => {
+                                        await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), amountToExpect * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                    });
+                                    // await jupiter.createOrderLimit(1000000, 1000000, wallet!, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
                                 })
                             }
                         }
                     })
 
+                    await Promise.all(subPromise);
+
                 })
                 await Promise.all(promise)
-                coloredWarn("------------------------------------------------------")
                 coloredInfo("Rerunning in 5 Seconds time.\n\n\n")
             } else {
-                coloredWarn("Rerunning the bot again in 5 seconds.")
+                coloredWarn("Rerunning the bot again in 5 seconds.\n\n\n")
                 coloredWarn("-----------------------------------------------------------\n\n\n")
                 await sleep(5000).then(async () => {
                     await main();
