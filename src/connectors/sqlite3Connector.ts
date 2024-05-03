@@ -45,17 +45,17 @@ class DatabaseConnector {
                         this.db.run(`INSERT INTO ${dbTable} (name, balance, purchaseAmount, sellAmount) VALUES (?, ?, ?, ?)`, [tokenName, tokenBalance, purchasePrice, sellingPrice], async (err: { message: any; }) => {
                             if (err) {
                                 coloredError(err.message, "DB");
-                                await sleep(3000);
+                                await sleep(7000);
                             } else {
                                 coloredInfo(`Inserted data with id`, "DB");
-                                await sleep(3000);
+                                await sleep(7000);
                             }
                         });
                     })
                 }
             } else {
                 coloredInfo(`Inserted data with id`, "DB");
-                await sleep(3000);
+                await sleep(7000);
             }
         });
 

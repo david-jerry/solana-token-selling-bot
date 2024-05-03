@@ -6,6 +6,7 @@ import { LimitOrderProvider, ownerFilter } from "@jup-ag/limit-order-sdk";
 import { BN, Wallet } from '@project-serum/anchor';
 import { coloredDebug, coloredError, coloredInfo, coloredWarn } from '../utils/logger';
 import axios from 'axios';
+import sleep from '../utils/sleepTimout';
 
 interface TokenData {
     id: string;
@@ -127,7 +128,9 @@ class JupiterConnector {
     createOrderLimit = async (amountToSell: number, amountToExpect: number, wallet: Wallet, sellTokenAddress: string, buyTokenAddress: string): Promise<void> => {
         coloredInfo("Creating a new Limit Order");
         coloredInfo(`Amount to sell: ${new BN(amountToSell)}`)
-        coloredInfo(`Amount to buy: ${new BN(amountToExpect)}`)
+        coloredInfo(`Amount to get: ${new BN(amountToExpect)}`)
+
+        await sleep(3500);
 
         const base = Keypair.generate();
         try {
@@ -140,13 +143,12 @@ class JupiterConnector {
                 expiredAt: null,
                 base: base.publicKey,
             }).then(async ({ tx, orderPubKey }) => {
-                console.error(wallet.payer.publicKey.toJSON())
-                console.log(tx.feePayer)
-                console.log(base.publicKey.toJSON())
-    
+                console.log("Payer: ", wallet.payer.publicKey);
+                console.log(tx);
+                console.log("Order Public Key: ", orderPubKey);
                 await sendAndConfirmTransaction(this.connection, tx, [wallet.payer, base]);
                 coloredDebug("Limit Order has been submitted successfully", "jupiter");
-                return orderPubKey
+                return orderPubKey;
             });
         } catch (err: any) {
             coloredError(err.message)

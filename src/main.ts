@@ -34,7 +34,7 @@ const main = async () => {
                 coloredDebug(`Fetching current price for ${response?.tokensAddresses[0].tokenSymbol}`)
                 const tkSymbols: string[] = response.tokensAddresses.map(token => token.tokenSymbol)
                 const sellingPrice = await jupiter.getTokenSellingPrices(response.tokenSymbols);
-
+                await sleep(2500);
                 // Initialize an object to store token data
                 const tokenData = [];
 
@@ -48,6 +48,7 @@ const main = async () => {
                     }
                     coloredDebug("Fetching Pending Order Limits");
                     const openOrderTokenAddresses = await jupiter.getOpenOrder(wallet!);
+                    await sleep(2500);
 
                     // console.log("Order Limits", openOrderTokenAddresses)
 
@@ -63,8 +64,11 @@ const main = async () => {
                                     sellingPrice!.data[symbol].price + (sellingPrice!.data[symbol].price * EXPECTED_PERCENTAGE_PROFIT)
                                 ).then(async () => {
                                     coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.")
-                                    await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance).then(async (amountToExpect) => {
-                                        await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), amountToExpect * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                    await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance).then(async (ProfitInterface) => {
+                                        await sleep(2500);
+                                        // await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), ProfitInterface.finalValue * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                        await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), ProfitInterface.expectedTradingMarketPrice * Math.pow(10,token.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                        await sleep(2500);
                                     });
                                     // await jupiter.createOrderLimit(1000000, 1000000, wallet!, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
                                 })
@@ -80,18 +84,18 @@ const main = async () => {
             } else {
                 coloredWarn("Rerunning the bot again in 5 seconds.\n\n\n")
                 coloredWarn("-----------------------------------------------------------\n\n\n")
-                await sleep(5000).then(async () => {
+                await sleep(9000).then(async () => {
                     await main();
                 })
             }
         })
     } catch (error: any) {
         coloredError(`${error.message} \n\n\n`)
-        await sleep(5000).then(async () => {
+        await sleep(9000).then(async () => {
             await main();
         })
     } finally {
-        await sleep(5000).then(async () => {
+        await sleep(9000).then(async () => {
             await main()
         })
     }
