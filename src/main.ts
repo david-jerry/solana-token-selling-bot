@@ -67,7 +67,7 @@ const main = async () => {
                                     await calculateProfit(sellingPrice!.data[symbol].price, token.tokenBalance).then(async (ProfitInterface) => {
                                         await sleep(2500);
                                         // await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), ProfitInterface.finalValue * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
-                                        await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), ProfitInterface.expectedTradingMarketPrice * Math.pow(10,token.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
+                                        await jupiter.createOrderLimit(token.tokenBalance * Math.pow(10,token.decimals!), ProfitInterface.expectedTradingMarketPrice * Math.pow(10,outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken)
                                         await sleep(2500);
                                     });
                                     // await jupiter.createOrderLimit(1000000, 1000000, wallet!, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
