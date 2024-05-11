@@ -185,10 +185,20 @@ class JupiterConnector {
      */
     getOpenOrder = async (owner: Wallet): Promise<string[] | undefined> => {
         try {
-            const res = await this.limitOrder.getOrders([ownerFilter(owner.publicKey)]);
-            const openOrderTokenAddresses: string[] = res.map(order => order.account.inputMint.toString())
-            return openOrderTokenAddresses
-        } catch (e) {
+            const openOrderTokenAddresses: string[] = [];
+            const res = await this.limitOrder.getOrders([ownerFilter(owner.publicKey)])
+
+            coloredDebug("Finding Open Order Token Addresses...");
+
+            for (const order of res) {
+                const tokenAddress = order.account.inputMint.toString();
+                openOrderTokenAddresses.push(tokenAddress);
+            }
+
+            coloredDebug(`Open Order Found: ${openOrderTokenAddresses}`);
+            return openOrderTokenAddresses;
+        } catch (e: any) {
+            console.log(e.message)
             return undefined
         }
     }
