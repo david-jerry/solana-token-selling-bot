@@ -11,8 +11,20 @@ import { Wallet } from '@project-serum/anchor';
 
 const AMOUNT_OF_TOKENS_TO_SWAP = (Number(process.env.AMOUNT_OF_TOKENS_TO_SWAP) / 100) || 1;
 const EXPECTED_PERCENTAGE_PROFIT = (Number(process.env.EXPECTED_PERCENTAGE_PROFIT) / 100) || 0.5;
+interface TokenInfo {
+    tokenAddress: string; // Assuming mintAddress is of type string
+    tokenBalance: number; // Assuming tokenBalance is of type number
+    decimals: number | null;
+    tokenSymbol: string;
+}
 
-const checkAndProcessSymbol = async (symbol: string, sellingPrice: any, tokenData: any[], response: any, db: DatabaseConnector, jupiter: JupiterConnector, solana: SolanaConnector, wallet: Wallet | undefined) => {
+interface ResponseInterface {
+    tokensAddresses: TokenInfo[];
+    tokenIds: string;
+    tokenSymbols: string;
+}
+
+const checkAndProcessSymbol = async (symbol: string, sellingPrice: any, tokenData: any[], response: ResponseInterface, db: DatabaseConnector, jupiter: JupiterConnector, solana: SolanaConnector, wallet: Wallet | undefined) => {
     // Check if the symbol exists in sellingPrice!.data
     if (symbol in sellingPrice!.data) {
         // Save the data for that symbol
@@ -25,7 +37,7 @@ const checkAndProcessSymbol = async (symbol: string, sellingPrice: any, tokenDat
     }
 }
 
-const processOpenOrders = async (symbol: string, openOrderTokenAddresses: string[] | undefined, response: any, sellingPrice: any, db: DatabaseConnector, jupiter: JupiterConnector, solana: SolanaConnector, wallet: Wallet | undefined) => {
+const processOpenOrders = async (symbol: string, openOrderTokenAddresses: string[] | undefined, response: ResponseInterface, sellingPrice: any, db: DatabaseConnector, jupiter: JupiterConnector, solana: SolanaConnector, wallet: Wallet | undefined) => {
     const responseToken = response.tokensAddresses.find((token: { tokenSymbol: string; }) => token.tokenSymbol === symbol);
     if (responseToken) {
         if (openOrderTokenAddresses !== undefined && openOrderTokenAddresses.length < 1 || openOrderTokenAddresses !== undefined && !openOrderTokenAddresses.includes(sellingPrice!.data[symbol].id)) {
@@ -39,10 +51,10 @@ const processOpenOrders = async (symbol: string, openOrderTokenAddresses: string
             ).then(async () => {
                 coloredInfo("Data saved into the database. Use an sqlite viewer to view the data table.\n\n\n");
                 await sleep(2500);
-                await calculateProfit(sellingPrice!.data[symbol].price, responseToken.tokenBalance).then(async (profitInterface) => {
+                await calculateProfit(sellingPrice!.data[symbol].price, responseToken.tokenBalance).then(async (profit) => {
                     // Create order logic with proper price adjustments based on outputToken.decimals
 
-                    if (outputToken !== null) await jupiter.createOrderLimit((responseToken.tokenBalance * sellingPrice!.data[symbol].price) * (10 ** outputToken.decimals!), (responseToken.tokenBalance * profitInterface.expectedTradingMarketPrice) * (10 ** outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken);
+                    if (outputToken !== null) await jupiter.createOrderLimit(responseToken.tokenBalance * (10 ** responseToken.decimals!), (responseToken.tokenBalance * profit.expectedTradingMarketPrice) * (10 ** outputToken.decimals!), wallet!, sellingPrice!.data[symbol].id, sellingPrice!.data[symbol].vsToken);
                     await sleep(2500);
                 });
             });
@@ -69,6 +81,7 @@ const main = async () => {
                     coloredWarn("------------------------------------------------------\n\n")
                     coloredDebug(`Fetching current market price for tokens`,)
                     const tkSymbols: string[] = await extractSymbols(response)
+
                     await jupiter.getTokenSellingPrices(response.tokenSymbols).then(async (sellingPrice) => {
                         // Initialize an object to store token data
                         const tokenData: any[] = [];
